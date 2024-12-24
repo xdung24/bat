@@ -134,7 +134,7 @@ func (pb *ProgressBar) write(current int64) {
 	}
 
 	// time left
-	fromStart := time.Now().Sub(pb.startTime)
+	fromStart := time.Since(pb.startTime)
 	if atomic.LoadInt32(&pb.isFinish) != 0 {
 		if pb.ShowFinalTime {
 			left := (fromStart / time.Second) * time.Second
@@ -149,7 +149,7 @@ func (pb *ProgressBar) write(current int64) {
 
 	// speed
 	if pb.ShowSpeed && current > 0 {
-		fromStart := time.Now().Sub(pb.startTime)
+		fromStart := time.Since(pb.startTime)
 		speed := float64(current) / (float64(fromStart) / float64(time.Second))
 		speedBox = FormatBytes(int64(speed)) + "/s "
 	}

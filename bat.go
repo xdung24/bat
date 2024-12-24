@@ -104,7 +104,6 @@ func parsePrintOption(s string) {
 	if strings.ContainsRune(s, 'b') {
 		printOption |= printRespBody
 	}
-	return
 }
 
 func main() {
@@ -225,8 +224,7 @@ func main() {
 				f = strings.TrimSpace(f)
 				if strings.HasPrefix(f, "filename=") {
 					// Remove 'filename='
-					f = strings.TrimLeft(f, "filename=")
-
+					f = strings.TrimPrefix(f, "filename=")
 					// Remove quotes and spaces from either end
 					f = strings.TrimLeft(f, "\"' ")
 					fl = strings.TrimRight(f, "\"' ")

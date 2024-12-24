@@ -37,12 +37,12 @@ func RunBench(b *httplib.BeegoHttpRequest) {
 	close(jobs)
 
 	wg.Wait()
-	printReport(benchN, results, "", time.Now().Sub(start))
+	printReport(results, "", time.Since(start))
 	close(results)
 }
 
 func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.BeegoHttpRequest) {
-	for _ = range ch {
+	for range ch {
 		s := time.Now()
 		code := 0
 		size := int64(0)
@@ -56,7 +56,7 @@ func worker(wg *sync.WaitGroup, ch chan int, results chan *result, b *httplib.Be
 
 		results <- &result{
 			statusCode:    code,
-			duration:      time.Now().Sub(s),
+			duration:      time.Since(s),
 			err:           err,
 			contentLength: size,
 		}
@@ -85,7 +85,7 @@ type report struct {
 	output string
 }
 
-func printReport(size int, results chan *result, output string, total time.Duration) {
+func printReport(results chan *result, output string, total time.Duration) {
 	r := &report{
 		output:         output,
 		results:        results,
