@@ -4,18 +4,16 @@ import (
 	"bytes"
 	"encoding/json"
 	"fmt"
-	"io/ioutil"
+	"io"
 	"log"
 	"net/http"
 	"os"
 	"regexp"
 	"strings"
 	"time"
-
-	"github.com/astaxie/bat/httplib"
 )
 
-var defaultSetting = httplib.BeegoHttpSettings{
+var defaultSetting = BeegoHttpSettings{
 	ShowDebug:        true,
 	UserAgent:        "bat/" + version,
 	ConnectTimeout:   60 * time.Second,
@@ -24,8 +22,8 @@ var defaultSetting = httplib.BeegoHttpSettings{
 	DumpBody:         true,
 }
 
-func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequest) {
-	r = httplib.NewBeegoRequest(url, method)
+func getHTTP(method string, url string, args []string) (r *BeegoHttpRequest) {
+	r = NewBeegoRequest(url, method)
 	r.Setting(defaultSetting)
 	r.Header("Accept-Encoding", "gzip, deflate")
 	if *isjson {
@@ -62,7 +60,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 				if err != nil {
 					log.Fatal("Read File", strings.TrimLeft(strs[1], "@"), err)
 				}
-				content, err := ioutil.ReadAll(f)
+				content, err := io.ReadAll(f)
 				if err != nil {
 					log.Fatal("ReadAll from File", strings.TrimLeft(strs[1], "@"), err)
 				}
@@ -85,7 +83,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 				if err != nil {
 					log.Fatal("Read File", strings.TrimLeft(strs[1], "@"), err)
 				}
-				content, err := ioutil.ReadAll(f)
+				content, err := io.ReadAll(f)
 				if err != nil {
 					log.Fatal("ReadAll from File", strings.TrimLeft(strs[1], "@"), err)
 				}
@@ -105,7 +103,7 @@ func getHTTP(method string, url string, args []string) (r *httplib.BeegoHttpRequ
 	return
 }
 
-func formatResponseBody(res *http.Response, httpreq *httplib.BeegoHttpRequest, pretty bool) string {
+func formatResponseBody(res *http.Response, httpreq *BeegoHttpRequest, pretty bool) string {
 	body, err := httpreq.Bytes()
 	if err != nil {
 		log.Fatalln("can't get the url", err)

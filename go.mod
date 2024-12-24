@@ -1,3 +1,3 @@
-module github.com/astaxie/bat
+module github.com/xdung24/bat
 
-go 1.12
+go 1.23

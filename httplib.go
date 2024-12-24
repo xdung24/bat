@@ -29,7 +29,7 @@
 //		fmt.Println(str)
 //
 //	 more docs http://beego.me/docs/module/httplib.md
-package httplib
+package main
 
 import (
 	"bytes"
@@ -38,7 +38,6 @@ import (
 	"encoding/json"
 	"encoding/xml"
 	"io"
-	"io/ioutil"
 	"log"
 	"mime/multipart"
 	"net"
@@ -52,7 +51,6 @@ import (
 	"time"
 )
 
-var defaultSetting = BeegoHttpSettings{false, "beegoServer", 60 * time.Second, 60 * time.Second, nil, nil, nil, false, true, true}
 var defaultCookieJar http.CookieJar
 var settingMutex sync.Mutex
 
@@ -92,11 +90,16 @@ func NewBeegoRequest(rawurl, method string) *BeegoHttpRequest {
 		ProtoMinor: 1,
 	}
 
+	if defaultCookieJar == nil {
+		createDefaultCookie()
+	}
+
 	// Create a custom HTTP client with TLS configuration to skip certificate verification
 	httpClient := &http.Client{
 		Transport: &http.Transport{
 			TLSClientConfig: &tls.Config{InsecureSkipVerify: true},
 		},
+		Jar: defaultCookieJar,
 	}
 
 	return &BeegoHttpRequest{
@@ -294,11 +297,11 @@ func (b *BeegoHttpRequest) Body(data interface{}) *BeegoHttpRequest {
 	switch t := data.(type) {
 	case string:
 		bf := bytes.NewBufferString(t)
-		b.req.Body = ioutil.NopCloser(bf)
+		b.req.Body = io.NopCloser(bf)
 		b.req.ContentLength = int64(len(t))
 	case []byte:
 		bf := bytes.NewBuffer(t)
-		b.req.Body = ioutil.NopCloser(bf)
+		b.req.Body = io.NopCloser(bf)
 		b.req.ContentLength = int64(len(t))
 	}
 	return b
@@ -312,7 +315,7 @@ func (b *BeegoHttpRequest) JsonBody(obj interface{}) (*BeegoHttpRequest, error) 
 		if err := enc.Encode(obj); err != nil {
 			return b, err
 		}
-		b.req.Body = ioutil.NopCloser(buf)
+		b.req.Body = io.NopCloser(buf)
 		b.req.ContentLength = int64(buf.Len())
 		b.req.Header.Set("Content-Type", "application/json")
 	}
@@ -322,7 +325,7 @@ func (b *BeegoHttpRequest) JsonBody(obj interface{}) (*BeegoHttpRequest, error) 
 func (b *BeegoHttpRequest) buildUrl(paramBody string) {
 	// build GET url with query string
 	if b.req.Method == "GET" && len(paramBody) > 0 {
-		if strings.Index(b.url, "?") != -1 {
+		if strings.Contains(b.url, "?") { // not the first param
 			b.url += "&" + paramBody
 		} else {
 			b.url = b.url + "?" + paramBody
@@ -360,7 +363,7 @@ func (b *BeegoHttpRequest) buildUrl(paramBody string) {
 				pw.Close()
 			}()
 			b.Header("Content-Type", bodyWriter.FormDataContentType())
-			b.req.Body = ioutil.NopCloser(pr)
+			b.req.Body = io.NopCloser(pr)
 			return
 		}
 
@@ -474,9 +477,12 @@ func (b *BeegoHttpRequest) Bytes() ([]byte, error) {
 		if err != nil {
 			return nil, err
 		}
-		b.body, err = ioutil.ReadAll(reader)
+		b.body, err = io.ReadAll(reader)
+		if err != nil {
+			return nil, err
+		}
 	} else {
-		b.body, err = ioutil.ReadAll(resp.Body)
+		b.body, err = io.ReadAll(resp.Body)
 	}
 	if err != nil {
 		return nil, err
